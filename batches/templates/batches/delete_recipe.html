@@ -1,0 +1,26 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'batches/style.css' %}" />
+
+{% if message %}
+{{ message }}
+{% else %}
+
+<p> Are you sure you want to delete recipe {{ recipe_id }}? </p>
+
+<table>
+<tr>
+<td> 
+
+<form action="{% url 'delete_recipe' recipe_id %}" method="post">
+{% csrf_token %}
+<input class="button button1" type="submit" value="Yes" /> 
+</form>
+
+<form action="{% url 'recipes' %}">
+<input class="button button1" type="submit" value="No" />
+</form>
+
+</td>
+</tr>
+</table>
+{% endif %}

@@ -1,0 +1,11 @@
+table {
+   width: 100%;
+   text-align: left;
+}
+th {
+    border-bottom: 1px solid #ddd;
+}
+
+table.forms_table {
+
+}

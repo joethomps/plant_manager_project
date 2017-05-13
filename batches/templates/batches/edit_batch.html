@@ -1,0 +1,47 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'batches/style.css' %}" />
+
+<h2>Edit Batch</h2>
+
+{% if message %}
+<p> {{ message }} </p>
+{% endif %}
+
+{% if form %}
+
+{% if batch_no %}
+<form action="{% url 'edit_batch' batch_no %}" method="post">
+{% else %}
+<form action="{% url 'new_batch' %}" method="post">
+{% endif %}
+
+{% csrf_token %}
+
+<table>
+{% for f in form %}
+<div class="fieldWrapper">
+<tr>
+    <td> {{ f.label_tag }} </td>
+    <td> {{ f }} </td>
+    <td> {{ f.errors }} </td>
+</tr>
+</div>
+{% endfor %}
+</table>
+
+<table>
+<tr>
+    <td> 
+	<input class="button button1" type="submit" value="Save" />
+	</form> 
+	{% if batch_no  %}
+	<form action="{% url 'delete_batch' batch_no %}">
+    	<input class="button button1" type="submit" value="Delete" />
+	</form>
+	{% endif %}
+    </td>
+</tr>
+</table>
+
+{% endif %}
+

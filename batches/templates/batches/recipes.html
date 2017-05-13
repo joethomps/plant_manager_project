@@ -1,0 +1,39 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'batches/style.css' %}" />
+
+<h2>Recipes</h2>
+
+<p> <a href="{% url 'new_recipe' %}" > Create new recipe </a> </p>
+
+<table>
+	<tr>
+	<th> ID </th>
+	<th> Name </th>
+	<th> Description </th>
+	<th> Slump </th>
+	<th> Exp </th>
+	<th> Cl Cont. </th>
+	{% for i in ing_list %}
+        <th> {{ i }} </th>
+	{% endfor %}
+	<th> </th>
+	<th> </th>
+	</tr>
+
+{% for r in recipe_data %}
+	<tr>
+	<td> {{ r.recipe.id }} </td>
+	<td> {{ r.recipe.name }} </td>
+	<td> {{ r.recipe.description }} </td>
+	<td> {{ r.recipe.slump_class }} </td>
+	<td> {{ r.recipe.exposure_class }} </td>
+	<td> {{ r.recipe.cl_content_class }} </td>
+	{% for i in r.details %}
+        <td> {{ i }} </td>
+	{% endfor %}
+	<td> <a href="{% url 'copy_recipe' r.recipe.id %}"> Copy </a> </td>
+	<td> <a href="{% url 'edit_recipe' r.recipe.id %}"> Edit </a> </td>
+	</tr>
+{% endfor %}
+
+</table>

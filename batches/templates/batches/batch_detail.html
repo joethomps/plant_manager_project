@@ -1,0 +1,70 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'batches/style.css' %}" />
+
+<h2>Batch Details</h2>
+
+<h3> Batch No: {{ batch }} </h3>
+<p>
+<table>
+   <tr>
+      <td> Created: </td>
+      <td> {{ batch.create_time|date:"P D d M Y" }} </td>
+   </tr>
+   <tr>
+      <td> Client: </td>
+      <td> {{ batch.client }} </td>
+   </tr>
+   <tr>
+      <td> Truck: </td>
+      <td> {{ batch.truck }} </td>
+   </tr>
+   <tr>
+      <td> Driver: </td>
+      <td> {{ batch.driver }} </td>
+   </tr>
+   <tr>
+      <td> Recipe: </td>
+      <td> {{ batch.recipe }} </td>
+   </tr>
+   <tr>
+      <td> Delivery Address: </td>
+      <td> {{ batch.deliv_addr_1 }}
+           {% if batch.deliv_addr_2 %}, {{ batch.deliv_addr_2 }}{% endif %}
+           {% if batch.deliv_addr_3 %}, {{ batch.deliv_addr_3 }}{% endif %}
+           {% if batch.deliv_addr_4 %}, {{ batch.deliv_addr_4 }}{% endif %} </td>
+   </tr>
+</table>
+</p>
+
+{% for drop in batch.drop_set.all %}
+	<p>
+	<table>
+		<tr>
+        	<th> Drop {{ drop.no_in_batch }} of {{ batch.drop_set.count }} </th>
+		<th> Volume: {{ drop.volume }} m<sup>3</sup> </th>
+		<th> Start Time: {{ drop.start_datetime.time }} </th>
+		<th> End Time: {{ drop.end_datetime.time }} </th>
+		</tr>
+	</table>
+	<table>
+		<tr>
+        	<th> Ingredient </th>
+		<th> Design </th>
+		<th> Target </th>
+		<th> Actual </th>
+		<th> Moisture </th>
+		</tr>
+    
+		{% for detail in drop.drop_detail_set.all %}
+		<tr>
+        	<td> {{ detail.ingredient }} </td>
+		<td> {{ detail.design }} </td>
+		<td> {{ detail.target }} </td>
+		<td> {{ detail.actual }} </td>
+		<td> {{ detail.moisture }} </td>
+		</tr>
+		{% endfor %}
+	</table>
+	</p>
+	
+{% endfor %}
