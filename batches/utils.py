@@ -27,7 +27,12 @@ def createDocket(b):
          'description': str(b.recipe.description),
          'quantity': str(b.volume) + ' m^3',
          }
-
+    d4 = {'name:':'info',
+         }
+    d5 = {'name:':'info',
+         }
+    d6 = {'name:':'info',
+         }
     # initialise canvas object for ticket
     filename = 'b' + str(b.batch_no).zfill(8) + '.pdf'
     filepath = settings.MEDIA_ROOT + '\\' + filename
@@ -95,6 +100,8 @@ def createDocket(b):
                )
     t3.place_cursor(c1,1,1); c1.write('Composition')
     t3.place_cursor(c1,1,2); c1.write('On Site')
+    t3.place_cursor(c2,2,1); c2.dictwrite(d4)
+    t3.place_cursor(c2,2,2); c2.dictwrite(d5)
     
     t4 = table(p,        
                left=t3.left,
@@ -104,6 +111,7 @@ def createDocket(b):
                bord_t=False,
                )
     t4.place_cursor(c1,1,1); c1.write('Customer')
+    t4.place_cursor(c2,2,1); c2.dictwrite(d6)
     
     # draw logos on the page
     nsaiHeight = 25*mm
