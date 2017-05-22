@@ -1,5 +1,6 @@
-{% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'batches/style.css' %}" />
+{% extends "batches/base.html" %}
+
+{% block content %}
 
 <h2>Batch Details</h2>
 
@@ -68,3 +69,5 @@
 	</p>
 	
 {% endfor %}
+
+{% endblock %}

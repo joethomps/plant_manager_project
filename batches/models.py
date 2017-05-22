@@ -3,6 +3,14 @@ from django.utils import timezone
 
 class Client(models.Model):
     name = models.CharField(max_length=50)
+    def can_edit(self):
+        if self.batch_set.exists():
+            edit = False
+            msg = 'Cannot edit client once it has been used in a batch'
+        else:
+            edit = True
+            msg = ''
+        return (edit, msg)
     def __str__(self):
         return self.name
 
@@ -12,10 +20,12 @@ class Recipe(models.Model):
     slump_class = models.CharField(max_length=10, blank=True)
     exposure_class = models.CharField(max_length=10, blank=True)
     cl_content_class = models.CharField(max_length=10, blank=True)
+    mix_time = models.IntegerField(default=180)
     active = models.BooleanField(default=True)
-    def been_used(self):
-        bs = self.batch_set.all()
-        return True if bs.exists() else False
+    def batch_pending(self):
+        bp = self.batch_set.all()
+        bp = self.batch_set.filter(status="PEND").count()
+        return True if bp>0 else False
     def details_as_list(self, ing_list):
         det = []
         for i in ing_list:
@@ -27,6 +37,14 @@ class Recipe(models.Model):
 
 class Driver(models.Model):
     name = models.CharField(max_length=50)
+    def can_edit(self):
+        if self.batch_set.exists():
+            edit = False
+            msg = 'Cannot edit driver once it has been used in a batch'
+        else:
+            edit = True
+            msg = ''
+        return (edit, msg)
     def __str__(self):
         return self.name
 
@@ -43,6 +61,14 @@ class Ingredient(models.Model):
     description = models.CharField(max_length=200, blank=True)
     unit = models.CharField(max_length=10, blank=True)
     agg_size = models.IntegerField(default=0,blank=True)
+    def can_edit(self):
+        if self.drop_detail_set.exists():
+            edit = False
+            msg = 'Cannot edit ingredient once it has been used in a batch'
+        else:
+            edit = True
+            msg = ''
+        return (edit, msg)
     def __str__(self):
         return self.name
 
@@ -52,11 +78,23 @@ class Location(models.Model):
     description = models.CharField(max_length=50, blank=True)
     current_ingredient = models.ForeignKey(Ingredient, on_delete=models.SET_NULL, null=True)
     usage_ratio = models.IntegerField(default=1)
+    def can_edit(self):
+        edit = True
+        msg = ''
+        return (edit, msg)
     def __str__(self):
         return self.name
 
 class Truck(models.Model):
     reg = models.CharField(max_length=15)
+    def can_edit(self):
+        if self.batch_set.exists():
+            edit = False
+            msg = 'Cannot edit truck once it has been used in a batch'
+        else:
+            edit = True
+            msg = ''
+        return (edit, msg)
     def __str__(self):
         return self.reg
 
@@ -77,7 +115,7 @@ class Batch(models.Model):
     batch_no = models.IntegerField(default=next_batch_no, editable=False)
     create_time = models.DateTimeField(default=timezone.now, editable=False)
     client = models.ForeignKey(Client, on_delete=models.PROTECT)
-    recipe = models.ForeignKey(Recipe, on_delete=models.PROTECT)
+    recipe = models.ForeignKey(Recipe, on_delete=models.SET_NULL, null=True)
     truck = models.ForeignKey(Truck, on_delete=models.PROTECT)
     driver = models.ForeignKey(Driver, on_delete=models.PROTECT)
     volume = models.DecimalField(max_digits=4, decimal_places=2)

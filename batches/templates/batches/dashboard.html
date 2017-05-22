@@ -1,6 +1,7 @@
-{% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'batches/style.css' %}" />
+{% extends "batches/base.html" %}
 <meta http-equiv="refresh" content="30">
+
+{% block content %}
 
 <h2>Batch Dashboard</h2>
 <p> <a class="button button1" href="{% url 'new_batch' %}" > Create new batch </a> </p>
@@ -31,3 +32,6 @@
 	</tr>
 {% endfor %}
 </table>
+
+
+{% endblock %}

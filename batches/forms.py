@@ -1,5 +1,5 @@
 from django import forms
-from batches.models import Batch, Recipe, Recipe_Detail, Client, Truck, Driver
+from batches.models import Batch, Recipe, Recipe_Detail, Client, Truck, Driver, Location, Ingredient
 
 class BatchForm(forms.ModelForm):
     class Meta:
@@ -9,7 +9,7 @@ class BatchForm(forms.ModelForm):
 class RecipeForm(forms.ModelForm):
     class Meta:
         model = Recipe
-        fields = ['name', 'description', 'slump_class', 'exposure_class', 'cl_content_class']
+        fields = ['name', 'description', 'slump_class', 'exposure_class', 'cl_content_class', 'mix_time']
 
 class RecipeDetailForm(forms.ModelForm):
     class Meta:
@@ -30,4 +30,14 @@ class DriverForm(forms.ModelForm):
     class Meta:
         model = Driver
         exclude = []
-    
+
+class IngredientForm(forms.ModelForm):
+    class Meta:
+        model = Ingredient
+        fields = ['name', 'description', 'category', 'agg_size', 'unit']
+
+class LocationForm(forms.ModelForm):
+    class Meta:
+        model = Location
+        fields = ['current_ingredient', 'usage_ratio']
+        

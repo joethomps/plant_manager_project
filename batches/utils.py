@@ -12,17 +12,17 @@ def createDocket(b):
     no_drops = drops.count()
 
     # dictionary of the information to be printed on the ticket
-    d = {'client': str(b.client),
-         'deliv_addr_1': str(b.deliv_addr_1),
-         'deliv_addr_2': str(b.deliv_addr_2),
-         'deliv_addr_3': str(b.deliv_addr_3),
-         'deliv_addr_4': str(b.deliv_addr_4),
-         'eircode': str(b.eircode),
-         'date': str(drops[0].end_datetime.date()),
-         'load_time': str(drops[no_drops-1].end_datetime.time()),
-         'driver': str(b.driver),
-         'truck_reg': str(b.truck),
-         'order_ref': 'ORD' + str(b.batch_no),
+    d1 = {'Name:': str(b.client),
+         'Delivery Address:': [str(b.deliv_addr_1),
+                              str(b.deliv_addr_2),
+                              str(b.deliv_addr_3),
+                              str(b.deliv_addr_4),
+                              str(b.eircode)]}
+    d2 = {'Date:': str(drops[0].end_datetime.date()),
+         'Time of Loading:': str(drops[no_drops-1].end_datetime.time()),
+         'Driver:': str(b.driver),
+         'Truck Reg.:': str(b.truck)}
+    d3 = {'order_ref': 'ORD' + str(b.batch_no),
          'prod_code': str(b.recipe.name),
          'description': str(b.recipe.description),
          'quantity': str(b.volume) + ' m^3',
@@ -35,6 +35,7 @@ def createDocket(b):
     pw, ph = A4
     p.setTitle('Delivery Ticket')
     p.setLineWidth(0.5)
+
     marg = {'l':20, 'r':20, 't':10, 'b':10}
     w = pw-marg['l']-marg['r']
     h = ph-marg['t']-marg['b']
@@ -43,93 +44,66 @@ def createDocket(b):
     #p.setFillColorRGB(1, 1, 1)
     
     # draw title in top corner
-    c1 = cursor(p,w,h-14,size=14)
-    c1.write('DELIVERY TICKET', align='right')
+    ct = cursor(p,w,h-14,size=14)
+    ct.write('DELIVERY TICKET', align='right')
 
-    c2 = cursor(p,0,h-20,size=20)
-    c2.write('FOGARTY CONCRETE')
-    c2.size = 12
-    c2.newline(); c2.write('Gurrane, Templederry, Nenagh, Co. Tipperary')
-    c2.newline(); c2.write('Telephone: 0504-52151  Fax: 0504-52957')
-    c2.newline(); c2.write('Mobile: 087-2831415 (Andy), 086-3813399 (Plant)')
-    c2.newline(); c2.write('Email: andrewfogarty@eircom.net')
+    # Header
+    ch = cursor(p,0,h-20,size=20)
+    ch.write('FOGARTY CONCRETE')
+    ch.size = 12; ch.newline();
+    ch.listwrite(['Gurrane, Templederry, Nenagh, Co. Tipperary',
+               'Telephone: 0504-52151  Fax: 0504-52957',
+               'Mobile: 087-2831415 (Andy), 086-3813399 (Plant)',
+               'Email: andrewfogarty@eircom.net'])
 
-    c2.ls = 0.3
+    c1 = cursor(p,0,0,size=12,font='Helvetica')
+    c2 = cursor(p,0,0,size=12,ls=0.3,font='Courier')
+    
     t1 = table(p,
                left=0,
                top=h-120,
-               row_heights=[120],
+               row_heights=[20, 120],
                col_widths=[w/2, w/2],
                )
-    t1.place_cursor(c2,1,1)
-    c2.font = 'Helvetica'; c2.write('Client: ')
-    c2.font = 'Courier'; c2.write(d['client'])
-    c2.newline(); c2.font = 'Helvetica'; c2.write('Delivery Address')
-    c2.font = 'Courier'
-    c2.newline(); c2.write(d['deliv_addr_1'])
-    c2.newline(); c2.write(d['deliv_addr_2'])
-    c2.newline(); c2.write(d['deliv_addr_3'])
-    c2.newline(); c2.write(d['deliv_addr_4'])
-    c2.newline(); c2.write(d['eircode'])
+    t1.place_cursor(c1,1,1); c1.write('Client')
+    t1.place_cursor(c1,1,2); c1.write('Loading')
+    t1.place_cursor(c2,2,1); c2.dictwrite(d1)
+    t1.place_cursor(c2,2,2); c2.dictwrite(d2)
 
-    t1.place_cursor(c2,1,2)
-    c2.font = 'Helvetica'; c2.write('Date: ')
-    c2.font = 'Courier'; c2.write(d['date'])
-    c2.newline(); c2.font = 'Helvetica'; c2.write('Time of Loading: ')
-    c2.font = 'Courier'; c2.write(d['load_time'])
-    c2.newline(); c2.font = 'Helvetica'; c2.write('Driver: ')
-    c2.font = 'Courier'; c2.write(d['driver'])
-    c2.newline(); c2.font = 'Helvetica'; c2.write('Truck Reg: ')
-    c2.font = 'Courier'; c2.write(d['truck_reg'])
-        
     t2 = table(p,        
                left=t1.left,
                top=t1.bottom,
-               row_heights=[20,40],
+               row_heights=[20,60],
                col_widths=[w/6, w/6, w/2, w/6],
                bord_t=False,
                )
-    c2.font = 'Helvetica'
-    t2.place_cursor(c2,1,1); c2.write('Order Ref')
-    t2.place_cursor(c2,1,2); c2.write('Product Code')
-    t2.place_cursor(c2,1,3); c2.write('Description')
-    t2.place_cursor(c2,1,4); c2.write('Quantity')
-    c2.font = 'Courier'
-    t2.place_cursor(c2,2,1); c2.write(d['order_ref'])
-    t2.place_cursor(c2,2,2); c2.write(d['prod_code'])
-    t2.place_cursor(c2,2,3); c2.write(d['description'])
-    t2.place_cursor(c2,2,4); c2.write(d['quantity'])
+    t2.place_cursor(c1,1,1); c1.write('Order Ref')
+    t2.place_cursor(c1,1,2); c1.write('Product Code')
+    t2.place_cursor(c1,1,3); c1.write('Description')
+    t2.place_cursor(c1,1,4); c1.write('Quantity')
+    t2.place_cursor(c2,2,1); c2.write(d3['order_ref'])
+    t2.place_cursor(c2,2,2); c2.write(d3['prod_code'])
+    t2.place_cursor(c2,2,3); c2.write(d3['description'])
+    t2.place_cursor(c2,2,4); c2.write(d3['quantity'])
 
     t3 = table(p,        
                left=t2.left,
                top=t2.bottom,
-               row_heights=[20,60],
-               col_widths=[w],
+               row_heights=[20,120],
+               col_widths=[w/2,w/2],
                bord_t=False,
                )
-    c2.font = 'Helvetica'
-    t3.place_cursor(c2,1,1); c2.write('Composition')
+    t3.place_cursor(c1,1,1); c1.write('Composition')
+    t3.place_cursor(c1,1,2); c1.write('On Site')
     
-
     t4 = table(p,        
                left=t3.left,
                top=t3.bottom,
-               row_heights=[20,60],
+               row_heights=[20,120],
                col_widths=[w],
                bord_t=False,
                )
-    c2.font = 'Helvetica'
-    t4.place_cursor(c2,1,1); c2.write('On Site')
-
-    t5 = table(p,        
-               left=t4.left,
-               top=t4.bottom,
-               row_heights=[20,60],
-               col_widths=[w],
-               bord_t=False,
-               )
-    c2.font = 'Helvetica'
-    t5.place_cursor(c2,1,1); c2.write('Customer')
+    t4.place_cursor(c1,1,1); c1.write('Customer')
     
     # draw logos on the page
     nsaiHeight = 25*mm
@@ -184,18 +158,18 @@ class cursor:
     """Simple cursor for writing text on canvas"""
     """(c) Joseph Thompson 2017"""
     
-    def __init__(self, canvas, start_x, start_y, font='Helvetica', size=12, line_space=0.5):
+    def __init__(self, canvas, start_x, start_y, font='Helvetica', size=12, ls=0.5):
         self.c = canvas
         self.x = start_x
         self.y = start_y
         self.font = font
         self.size = size
-        self.ls = line_space
+        self.ls = ls
         self.reset()
 
     def reset(self):
         self.x_home = self.x
-        self.x_home = self.x
+        self.y_home = self.y
         
     def write(self,text_string,align='left'):
         self.c.setFont(self.font, self.size)
@@ -208,7 +182,27 @@ class cursor:
         else:
             self.c.drawString(self.x, self.y, str(text_string))
             self.x += w
-            
+
+    def listwrite(self,text_string_list,align='left'):
+        for string in text_string_list:
+            self.write(string,align=align)
+            self.newline()
+
+    def dictwrite(self,text_string_dict,key_font='Helvetica'):
+        val_font = self.font
+        for key, val in text_string_dict.items():
+            self.font = key_font
+            self.write(key)
+            self.space()
+            self.font = val_font
+            val_x = self.x
+            if not isinstance(val,list):
+                val = [val]
+            for line in val:
+                self.x = val_x
+                self.write(line)
+                self.newline()
+        
     def space(self):
         self.write(' ')
 

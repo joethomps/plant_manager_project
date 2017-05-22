@@ -1,5 +1,6 @@
-{% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'batches/style.css' %}" />
+{% extends "batches/base.html" %}
+
+{% block content %}
 
 <h2>Recipes</h2>
 
@@ -13,6 +14,7 @@
 	<th> Slump </th>
 	<th> Exp </th>
 	<th> Cl Cont. </th>
+	<th> Mix Time </th>
 	{% for i in ing_list %}
         <th> {{ i }} </th>
 	{% endfor %}
@@ -28,6 +30,7 @@
 	<td> {{ r.recipe.slump_class }} </td>
 	<td> {{ r.recipe.exposure_class }} </td>
 	<td> {{ r.recipe.cl_content_class }} </td>
+	<td> {{ r.recipe.mix_time }} </td>
 	{% for i in r.details %}
         <td> {{ i }} </td>
 	{% endfor %}
@@ -37,3 +40,5 @@
 {% endfor %}
 
 </table>
+
+{% endblock %}
