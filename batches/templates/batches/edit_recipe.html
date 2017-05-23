@@ -22,6 +22,11 @@
 <tr>
 <th> Information </th> <th> </th> <th> </th>
 </tr>
+
+<tr><td> Recipe No. </td><td> {{ r.recipe_no }} </td></tr>
+<tr><td> Version </td><td> {{ r.version }} </td></tr>
+<tr><td> Last Edit </td><td> {{ r.create_time }} </td></tr>
+
 {% for f in RecForm %}
 <div class="fieldWrapper">
 <tr>

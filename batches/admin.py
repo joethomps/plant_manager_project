@@ -9,19 +9,15 @@ class RecipeDetailInline(admin.TabularInline):
 class RecipeAdmin(admin.ModelAdmin):
     fieldsets = [
         (None,               {'fields': ['name','description','active']}),
-        ('Specification Information', {'fields': ['slump_class', 'exposure_class', 'cl_content_class']})]
+        ('Specification Information', {'fields': ['strength_class','slump_class', 'exposure_class', 'cl_content_class']})]
     inlines = [RecipeDetailInline]
     list_display = ('name', 'description')
-
-class LocationAdmin(admin.ModelAdmin):
-    list_display = ('name','plc_ref','description','current_ingredient','usage_ratio')
-    ordering = ['plc_ref']
 
 admin.site.register(Client)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(Driver)
 admin.site.register(Ingredient)
-admin.site.register(Location, LocationAdmin)
+admin.site.register(Location)
 admin.site.register(Truck)
 admin.site.register(Batch)
 admin.site.register(Drop)

@@ -25,7 +25,7 @@
    </tr>
    <tr>
       <td> Recipe: </td>
-      <td> {{ batch.recipe }} </td>
+      <td> {{ batch.recipe }} ({{ batch.recipe.recipe_no }}.{{ batch.recipe.version }}) </td>
    </tr>
    <tr>
       <td> Delivery Address: </td>
@@ -36,6 +36,36 @@
    </tr>
 </table>
 </p>
+
+	<p>
+	<table>
+		<tr>
+        	<th> Totals </th>
+		<th> Volume: {{ batch.volume }} m<sup>3</sup> </th>
+		<th> Start Time: {{ batch.drop_set.all.first.start_datetime.time }} </th>
+		<th> End Time: {{ batch.drop_set.all.last.end_datetime.time }} </th>
+		</tr>
+	</table>
+	<table>
+		<tr>
+        	<th> Ingredient </th>
+		<th> Design </th>
+		<th> Target </th>
+		<th> Actual </th>
+		<th> Moisture (%)</th>
+		</tr>
+    
+		{% for detail in batch.batch_totals %}
+		<tr>
+        	<td> {{ detail.ingredient }} </td>
+		<td> {{ detail.design }} {{detail.ingredient.unit}} </td>
+		<td> {{ detail.target }} {{detail.ingredient.unit}}</td>
+		<td> {{ detail.actual }} {{detail.ingredient.unit}}</td>
+		<td> {{ detail.moisture }} </td>
+		</tr>
+		{% endfor %}
+	</table>
+	</p>
 
 {% for drop in batch.drop_set.all %}
 	<p>
@@ -53,15 +83,15 @@
 		<th> Design </th>
 		<th> Target </th>
 		<th> Actual </th>
-		<th> Moisture </th>
+		<th> Moisture (%) </th>
 		</tr>
     
 		{% for detail in drop.drop_detail_set.all %}
 		<tr>
         	<td> {{ detail.ingredient }} </td>
-		<td> {{ detail.design }} </td>
-		<td> {{ detail.target }} </td>
-		<td> {{ detail.actual }} </td>
+		<td> {{ detail.design }} {{detail.ingredient.unit}} </td>
+		<td> {{ detail.target }} {{detail.ingredient.unit}}</td>
+		<td> {{ detail.actual }} {{detail.ingredient.unit}}</td>
 		<td> {{ detail.moisture }} </td>
 		</tr>
 		{% endfor %}

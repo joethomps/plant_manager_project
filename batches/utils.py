@@ -3,13 +3,34 @@ from reportlab.lib.utils import ImageReader
 from reportlab.lib.units import mm
 from reportlab.lib.pagesizes import A4
 from django.conf import settings
+from django.db.models import Sum
 from reportlab.pdfbase.pdfmetrics import stringWidth
-from batches.models import Drop
+from batches.models import Drop, Recipe_Detail, Ingredient
+from django.db.models import Max, Sum, Avg, F
 
 def createDocket(b):
     # retrieve list of drops for batch in correct order
+    vol = b.volume
+    rec = b.recipe
     drops = b.drop_set.order_by('no_in_batch')
     no_drops = drops.count()
+    
+    agg_dets = Recipe_Detail.objects.filter(recipe=rec, ingredient__category='AGG')
+    admix_dets = Recipe_Detail.objects.filter(recipe=rec, ingredient__category='ADD')
+    cem_dets = Recipe_Detail.objects.filter(recipe=rec, ingredient__category='CEM')
+    wat_dets = Recipe_Detail.objects.filter(recipe=rec, ingredient__category='WAT')
+    
+    admix_dets = Recipe_Detail.objects.filter(recipe=rec, ingredient__category='ADD')
+    admix_qtys = [str(rd.ingredient) + ': ' + str(rd.quantity) + ' ' + str(rd.ingredient.unit) + '/m^3' for rd in admix_dets]
+    used_aggs = Ingredient.objects.filter(id__in=agg_dets.values('ingredient_id'))
+    max_agg_size = used_aggs.aggregate(Max('agg_size'))['agg_size__max'] if used_aggs.exists() else 0
+    min_cement_content = cem_dets.aggregate(Sum('quantity'))['quantity__sum'] if cem_dets.exists() else 0
+    water_content = wat_dets.aggregate(Sum('quantity'))['quantity__sum'] if wat_dets.exists() else 0
+    cem_types_q = Ingredient.objects.filter(id__in=cem_dets.values('ingredient_id'))
+    cem_types = ', '.join([c.cement_type for c in cem_types_q])
+    max_wc_ratio = water_content/min_cement_content
+    exp_classes = ', '.join([rec.exposure_class])
+    cl_content_class = rec.cl_content_class
 
     # dictionary of the information to be printed on the ticket
     d1 = {'Name:': str(b.client),
@@ -22,12 +43,19 @@ def createDocket(b):
          'Time of Loading:': str(drops[no_drops-1].end_datetime.time()),
          'Driver:': str(b.driver),
          'Truck Reg.:': str(b.truck)}
-    d3 = {'order_ref': 'ORD' + str(b.batch_no),
-         'prod_code': str(b.recipe.name),
-         'description': str(b.recipe.description),
+    d3 = {'order_ref': str(b.batch_no),
+         'prod_code': str(rec.get_strength_class_display()),
+         'description': str(rec.description),
          'quantity': str(b.volume) + ' m^3',
          }
-    d4 = {'name:':'info',
+    d4 = {'Admixtures:':admix_qtys,
+          'Slump: ':str(rec.get_slump_class_display()),
+          'Max Agg Size (D): ':str(max_agg_size) + ' mm',
+          'Min. Cement Content: ':str(min_cement_content) + ' kg/m^3',
+          'Cement Type: ':str(cem_types),
+          'Max W/C Ratio: ':str(max_wc_ratio),
+          'Exposure Class: ':str(exp_classes),
+          'Cl Content Class: ':str(cl_content_class),
          }
     d5 = {'name:':'info',
          }
@@ -82,7 +110,7 @@ def createDocket(b):
                col_widths=[w/6, w/6, w/2, w/6],
                bord_t=False,
                )
-    t2.place_cursor(c1,1,1); c1.write('Order Ref')
+    t2.place_cursor(c1,1,1); c1.write('Batch No.')
     t2.place_cursor(c1,1,2); c1.write('Product Code')
     t2.place_cursor(c1,1,3); c1.write('Description')
     t2.place_cursor(c1,1,4); c1.write('Quantity')
@@ -94,7 +122,7 @@ def createDocket(b):
     t3 = table(p,        
                left=t2.left,
                top=t2.bottom,
-               row_heights=[20,120],
+               row_heights=[20,150],
                col_widths=[w/2,w/2],
                bord_t=False,
                )
@@ -112,6 +140,17 @@ def createDocket(b):
                )
     t4.place_cursor(c1,1,1); c1.write('Customer')
     t4.place_cursor(c2,2,1); c2.dictwrite(d6)
+
+    t5 = table(p,        
+               left=t4.left,
+               top=t4.bottom,
+               row_heights=[40],
+               col_widths=[w],
+               bord_t=False,
+               )
+    t5.place_cursor(c1,1,1)
+    c1.write('Conforms to IS-EN-206-1:   ');
+    c1.write('Yes '); c1.checkbox(); c1.write('   No '); c1.checkbox()
     
     # draw logos on the page
     nsaiHeight = 25*mm
@@ -201,7 +240,7 @@ class cursor:
         for key, val in text_string_dict.items():
             self.font = key_font
             self.write(key)
-            self.space()
+            self.write(' ')
             self.font = val_font
             val_x = self.x
             if not isinstance(val,list):
@@ -210,13 +249,12 @@ class cursor:
                 self.x = val_x
                 self.write(line)
                 self.newline()
-        
-    def space(self):
-        self.write(' ')
 
     def newline(self):
         self.x = self.x_home
         self.y += -(1+self.ls)*self.size
 
-    
-
+    def checkbox(self):
+        s = self.size
+        self.c.rect(self.x, self.y-s/4.0, s*1.25, s*1.25)
+        self.x += s*1.25
