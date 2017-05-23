@@ -2,8 +2,6 @@ from django.db import models
 from django.utils import timezone
 from django.db.models import Max, Sum
 
-#from multiselectfield import MultiSelectField
-
 class Client(models.Model):
     name = models.CharField(max_length=50)
     def can_edit(self):
@@ -18,12 +16,6 @@ class Client(models.Model):
         return self.name
 
 class Recipe(models.Model):
-    def next_recipe_no():
-        max = Recipe.objects.all().aggregate(Max('recipe_no'))['recipe_no__max']
-        if max == None:
-            return 1
-        else:
-            return max+1
     STRENGTH_CLASS_CHOICES = (
         ('10', 'C8/10'),('15', 'C12/15'),('20', 'C16/20'),('25', 'C20/25'),('30', 'C25/30'),
         ('35', 'C28/35'),('37', 'C30/37'),('40', 'C32/40'),('45', 'C35/45'),('50', 'C40/50'),
@@ -51,14 +43,19 @@ class Recipe(models.Model):
         ('C1 0,20','C1 0,20'),
         ('C1 0,10','C1 0,10'),
     )
-    recipe_no = models.IntegerField(default=0)
+    def next_recipe_no():
+        max = Recipe.objects.all().aggregate(Max('recipe_no'))['recipe_no__max']
+        if max == None:
+            return 1
+        else:
+            return max+1
+    recipe_no = models.IntegerField(default=next_recipe_no)
     name = models.CharField(max_length=50)
     create_time = models.DateTimeField(default=timezone.now)
     description = models.CharField(max_length=200, blank=True)
     strength_class = models.CharField(max_length=2, choices=STRENGTH_CLASS_CHOICES, blank=True)
     slump_class = models.CharField(max_length=2, choices=SLUMP_CLASS_CHOICES, blank=True)
     exposure_class = models.CharField(max_length=3, choices=EXPOSURE_CLASS_CHOICES, blank=True)
-    #exp_class = MultiSelectField(choices=EXPOSURE_CLASS_CHOICES, blank=True)
     cl_content_class = models.CharField(max_length=7, choices=CL_CONTENT_CLASS_CHOICES, blank=True)
     mix_time = models.IntegerField(default=180)
     active = models.BooleanField(default=True)
