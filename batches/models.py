@@ -1,17 +1,11 @@
 from django.db import models
 from django.utils import timezone
-from django.db.models import Max, Sum
+from django.db.models import Max, Sum, Avg, F
 
 class Client(models.Model):
     name = models.CharField(max_length=50)
     def can_edit(self):
-        if self.batch_set.exists():
-            edit = False
-            msg = 'Cannot edit client once it has been used in a batch'
-        else:
-            edit = True
-            msg = ''
-        return (edit, msg)
+        return (False, 'Cannot edit client once it has been used in a batch') if self.used() else (True, '')
     def __str__(self):
         return self.name
 
@@ -61,27 +55,50 @@ class Recipe(models.Model):
     active = models.BooleanField(default=True)
     version = models.IntegerField(default=1)
     def used(self):
-        bp = self.batch_set.count()
-        return True if bp>0 else False
-    def details_as_list(self, ing_list):
-        det = []
+        return self.batch_set.exists()
+    def details_as_list(self, ing_list, include_zeros=True):
+        rds = self.recipe_detail_set
+        details = []
         for i in ing_list:
-            rd = self.recipe_detail_set.filter(ingredient=i)
-            det.append(rd.get().quantity if rd.exists() else 0)
-        return det
+            rd = rds.filter(ingredient=i)
+            if rd.exists():
+                details.append(rd.get().quantity)
+            elif include_zeros:
+                details.append(0)
+        return details
+    def admixtures_as_list(self):
+        rds = Recipe_Detail.objects.filter(recipe=self, ingredient__category='ADD')
+        return ['%s: %.2f %s/m^3' % (rd.ingredient, rd.quantity, rd.ingredient.unit) for rd in rds]   
+    def cement_types_as_list(self):
+        rds = Recipe_Detail.objects.filter(recipe=self, ingredient__category='CEM')
+        cems = Ingredient.objects.filter(id__in=rds.values('ingredient_id'))
+        return [c.cement_type for c in cems]
+    def exp_classes_as_list(self):
+        return [self.exposure_class]
+    def total_cat(self, category):
+        rds = Recipe_Detail.objects.filter(recipe=self, ingredient__category=category)
+        return rds.aggregate(Sum('quantity'))['quantity__sum'] if rds.exists() else 0
+    def total_aggregate(self):
+        return self.total_cat('AGG')
+    def total_cement(self):
+        return self.total_cat('CEM')
+    def total_water(self):
+        return self.total_cat('WAT')
+    def aggregate_D(self):
+        rds = Recipe_Detail.objects.filter(recipe=self, ingredient__category='AGG')
+        aggs = Ingredient.objects.filter(id__in=rds.values('ingredient_id'))
+        return aggs.aggregate(Max('agg_size'))['agg_size__max'] if aggs.exists() else 0
+    def wc_ratio(self):
+        return self.total_water()/self.total_cement() 
     def __str__(self):
-        return self.name
+        return '%s_%i.%i' % (self.name, self.recipe_no, self.version)
 
 class Driver(models.Model):
     name = models.CharField(max_length=50)
+    def used(self):
+        return self.batch_set.exists()
     def can_edit(self):
-        if self.batch_set.exists():
-            edit = False
-            msg = 'Cannot edit driver once it has been used in a batch'
-        else:
-            edit = True
-            msg = ''
-        return (edit, msg)
+        return (False, 'Cannot edit driver once it has been used in a batch') if self.used() else (True, '')
     def __str__(self):
         return self.name
 
@@ -99,19 +116,15 @@ class Ingredient(models.Model):
         ('CEM I SR', 'CEM I SR'),
     )
     name = models.CharField(max_length=50)
-    category = models.CharField(max_length=3,choices=INGREDIENT_TYPE_CHOICES,default='AGG')
+    category = models.CharField(max_length=3,choices=INGREDIENT_TYPE_CHOICES,default='OTH')
     description = models.CharField(max_length=200, blank=True)
     unit = models.CharField(max_length=10, blank=True)
     agg_size = models.IntegerField(default=0,blank=True)
     cement_type = models.CharField(max_length=10, choices=CEM_TYPE_CHOICES,blank=True)
+    def used(self):
+        return self.drop_detail_set.exists()
     def can_edit(self):
-        if self.drop_detail_set.exists():
-            edit = False
-            msg = 'Cannot edit ingredient once it has been used in a batch'
-        else:
-            edit = True
-            msg = ''
-        return (edit, msg)
+        return (False, 'Cannot edit ingredient once it has been used in a batch') if self.used() else (True, '')
     def __str__(self):
         return self.name
 
@@ -121,23 +134,13 @@ class Location(models.Model):
     description = models.CharField(max_length=50, blank=True)
     current_ingredient = models.ForeignKey(Ingredient, on_delete=models.SET_NULL, null=True)
     usage_ratio = models.IntegerField(default=1)
-    def can_edit(self):
-        edit = True
-        msg = ''
-        return (edit, msg)
     def __str__(self):
         return self.name
 
 class Truck(models.Model):
     reg = models.CharField(max_length=15)
     def can_edit(self):
-        if self.batch_set.exists():
-            edit = False
-            msg = 'Cannot edit truck once it has been used in a batch'
-        else:
-            edit = True
-            msg = ''
-        return (edit, msg)
+        return (False, 'Cannot edit client once it has been used in a batch') if self.used() else (True, '')
     def __str__(self):
         return self.reg
 
@@ -170,22 +173,37 @@ class Batch(models.Model):
     notes = models.CharField(max_length=200, blank=True)
     status = models.CharField(max_length=4, choices=BATCH_STATUS_CHOICES, default='PEND')
     ticket_created = models.BooleanField(default=False)
-    def batch_totals(self):
-        from django.db.models import Max, Sum, Avg, F
+    def start_datetime(self):
+        if self.drop_set.exists():
+            ds = self.drop_set.order_by('no_in_batch')
+            return ds[0].start_datetime
+        else:
+            return None
+    def end_datetime(self):
+        if self.drop_set.exists():
+            ds = self.drop_set.order_by('no_in_batch')
+            n = ds.count();
+            return ds[n-1].end_datetime
+        else:
+            return None
+    def batch_totals(self, include_zeros=False):
         dds = Drop_Detail.objects.filter(drop__batch=self)
-        ins = Ingredient.objects.all()
         totals = []
-        for i in ins:        
-            q = dds.filter(ingredient=i)
-            if q.exists():
-                total = {'ingredient':i}
-                for j in ['design','target','actual']:
-                    total[j] = q.aggregate(Sum(j))[j + '__sum']    
-                total['moisture'] = 0#q.aggregate(avg_moisture=Sum(F('moisture')*F('actual'))/Sum(F('actual')))['avg_moisture']
+        for i in Ingredient.objects.all():        
+            dd = dds.filter(ingredient=i)
+            total = {'ingredient':i}
+            if dd.exists():
+                aggs = dd.aggregate(design=Sum('design'), target=Sum('target'), actual=Sum('actual'),water=Sum(F('moisture')*F('actual')))
+                total.update(aggs)
+                if total['actual'] > 0:
+                    total['moisture'] = total['water']/total['actual']
                 totals.append(total)
-        return totals        
+            elif include_zeros:
+                total.update({'design':0, 'target':0, 'actual':0, 'water':0, 'moisture':0})
+                totals.append(total)
+        return totals      
     def __str__(self):
-        return str(self.batch_no).zfill(8)
+        return str(self.batch_no).zfill(6)
     
 class Drop(models.Model):
     drop_no = models.IntegerField()

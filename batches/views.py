@@ -12,17 +12,16 @@ def dashboard(request):
     return render(request, 'batches/dashboard.html', context)
 
 def recipes(request):
-    rec = Recipe.objects.filter(active=True).order_by('-recipe_no')
-    ing = Ingredient.objects.all()
-    data = [{'recipe':r, 'details':r.details_as_list(ing)} for r in rec]
-    context = {'recipe_data': data, 'ing_list': ing}
+    recipe_list = Recipe.objects.filter(active=True).order_by('-recipe_no')
+    ing_list = Ingredient.objects.order_by('category','pk')
+    recipe_data = [{'recipe':r, 'details':r.details_as_list(ing_list)} for r in recipe_list]
+    context = {'recipe_data': recipe_data, 'ing_list': ing_list}
     return render(request, 'batches/recipes.html', context)
 
 def all_recipes(request):
     rec = Recipe.objects.order_by('-recipe_no','-version')
-    ing = Ingredient.objects.all()
-    data = [{'recipe':r, 'details':r.details_as_list(ing)} for r in rec]
-    context = {'recipe_data': data, 'ing_list': ing}
+    data = [{'recipe':r, 'details':r.details_as_list()} for r in rec]
+    context = {'recipe_data': data}
     return render(request, 'batches/recipes.html', context)
 
 def generics(request, model):
