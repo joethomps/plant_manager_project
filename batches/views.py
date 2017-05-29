@@ -7,15 +7,21 @@ from django.urls import reverse
 from django.forms import formset_factory
 
 def dashboard(request):
-    recent_batches_list = Batch.objects.order_by('-batch_no')[0:10]
+    recent_batches_list = Batch.objects.order_by('-batch_no')[0:50]
     context = {'recent_batches_list': recent_batches_list}
     return render(request, 'batches/dashboard.html', context)
 
 def recipes(request):
-    rec = Recipe.objects.filter(active=True)
-    ing = Ingredient.objects.all()
-    data = [{'recipe':r, 'details':r.details_as_list(ing)} for r in rec]
-    context = {'recipe_data': data, 'ing_list': ing}
+    recipe_list = Recipe.objects.filter(active=True).order_by('-recipe_no')
+    ing_list = Ingredient.objects.order_by('category','pk')
+    recipe_data = [{'recipe':r, 'details':r.details_as_list(ing_list)} for r in recipe_list]
+    context = {'recipe_data': recipe_data, 'ing_list': ing_list}
+    return render(request, 'batches/recipes.html', context)
+
+def all_recipes(request):
+    rec = Recipe.objects.order_by('-recipe_no','-version')
+    data = [{'recipe':r, 'details':r.details_as_list()} for r in rec]
+    context = {'recipe_data': data}
     return render(request, 'batches/recipes.html', context)
 
 def generics(request, model):
@@ -34,8 +40,8 @@ def generics(request, model):
         data = [[obj.pk, obj.reg] for obj in Truck.objects.all()]
     elif model == 'ingredients':
         obj_name = 'Ingredient'
-        field_names = ['ID','Name','Category','Description','Unit','Size (Aggs)']
-        data = [[obj.pk, obj.name, obj.category, obj.description, obj.unit, obj.agg_size] for obj in Ingredient.objects.all()]
+        field_names = ['ID','Name','Category','Description','Unit','Agg Size','Cement Type']
+        data = [[obj.pk, obj.name, obj.category, obj.description, obj.unit, obj.agg_size, obj.cement_type] for obj in Ingredient.objects.all()]
     elif model == 'locations':
         create_new = False
         obj_name = 'Location'
@@ -118,7 +124,7 @@ def new_recipe(request):
             RecDetForms = dict()
             for i in ing:
                 RecDet = Recipe_Detail(recipe=Rec, ingredient=i) 
-                RecDetForms[str(i)] = RecipeDetailForm(request.POST, instance=RecDet, prefix=str(i))
+                RecDetForms[i] = RecipeDetailForm(request.POST, instance=RecDet, prefix=str(i))
             if all(RecDetForm.is_valid() for RecDetForm in RecDetForms.values()):
                 for RecDetForm in RecDetForms.values():
                     RecDet = RecDetForm.save(commit=False)
@@ -136,7 +142,7 @@ def new_recipe(request):
         RecDetForms = dict()
         for i in ing:
             RecDet = Recipe_Detail(ingredient=i, quantity=0) 
-            RecDetForms[str(i)] = RecipeDetailForm(instance=RecDet, prefix=str(i))
+            RecDetForms[i] = RecipeDetailForm(instance=RecDet, prefix=str(i))
 
     context = {'RecForm':RecForm, 'RecDetForms':RecDetForms, 'message':message}
     return render(request, 'batches/edit_recipe.html', context)
@@ -148,17 +154,28 @@ def edit_recipe(request, recipe_id):
     if request.method == 'POST':
         RecForm = RecipeForm(request.POST, instance=r, prefix='recipe')
         if RecForm.is_valid():
-            Rec = RecForm.save(commit=False)
-            Rec.save()
+            r_edit = RecForm.save(commit=False)
+            if r.used():                    
+                r_edit.pk = None
+                r_edit.version += 1
+                r_edit.save()
+                r = get_object_or_404(Recipe, id=recipe_id)
+                r.active = False
+                r.save()
+            else:
+                r_edit.save()
 
             RecDetForms = dict()
             for i in ing:
-                RecDetSearch = Recipe_Detail.objects.filter(recipe=Rec, ingredient=i)
-                RecDet = RecDetSearch.get() if RecDetSearch.exists() else Recipe_Detail(recipe=Rec, ingredient=i) 
-                RecDetForms[str(i)] = RecipeDetailForm(request.POST, instance=RecDet, prefix=str(i))
+                RecDetSearch = Recipe_Detail.objects.filter(recipe=r_edit, ingredient=i)
+                RecDet = RecDetSearch.get() if RecDetSearch.exists() else Recipe_Detail(recipe=r_edit, ingredient=i) 
+                RecDetForms[i] = RecipeDetailForm(request.POST, instance=RecDet, prefix=str(i))
             if all(RecDetForm.is_valid() for RecDetForm in RecDetForms.values()):
                 for RecDetForm in RecDetForms.values():
                     RecDet = RecDetForm.save(commit=False)
+                    if r.used():
+                        RecForm.pk = None
+                        RecForm.recipe = r_edit
                     if RecDet.quantity > 0: RecDet.save()
                 return HttpResponseRedirect(reverse('recipes'))
             else:
@@ -167,27 +184,28 @@ def edit_recipe(request, recipe_id):
             message = 'Recipe could not be saved. Please correct errors below:'
                     
     else:
-        message = 'Editing Recipe: ' + str(r.id) + ' - ' + str(r.name)
+        message = [] 
         RecForm = RecipeForm(instance=r, prefix='recipe')
         RecDetForms = dict()
         for i in ing:
             RecDetSearch = Recipe_Detail.objects.filter(recipe=r, ingredient=i)
             RecDet = RecDetSearch.get() if RecDetSearch.exists() else Recipe_Detail(recipe=r, ingredient=i, quantity=0)
-            RecDetForms[str(i)] = RecipeDetailForm(instance=RecDet, prefix=str(i))
+            RecDetForms[i] = RecipeDetailForm(instance=RecDet, prefix=str(i))
 
-    context = {'RecForm':RecForm, 'RecDetForms':RecDetForms, 'message':message, 'recipe_id':recipe_id}
+    context = {'r':r, 'RecForm':RecForm, 'RecDetForms':RecDetForms, 'message':message, 'recipe_id':recipe_id}
     return render(request, 'batches/edit_recipe.html', context)
 
 def delete_recipe(request, recipe_id):
     r = get_object_or_404(Recipe, id=recipe_id)
-    if r.batch_pending():
-        message = 'This recipe may not be deleted because it is linked to a pending batch.'
-    else:
-        if request.method == 'POST':
-            r.delete()
-            return HttpResponseRedirect(reverse('recipes'))
+    if request.method == 'POST':
+        if r.used():
+            r.active = False
+            r.save()
         else:
-            message = []
+            r.delete()
+        return HttpResponseRedirect(reverse('recipes'))
+    else:
+        message = []
                    
     context = {'message':message, 'recipe_id':recipe_id}
     return render(request, 'batches/delete_recipe.html', context)

@@ -16,6 +16,13 @@
       <td> {{ batch.client }} </td>
    </tr>
    <tr>
+      <td> Delivery Address: </td>
+      <td> {{ batch.deliv_addr_1 }}
+           {% if batch.deliv_addr_2 %}, {{ batch.deliv_addr_2 }}{% endif %}
+           {% if batch.deliv_addr_3 %}, {{ batch.deliv_addr_3 }}{% endif %}
+           {% if batch.deliv_addr_4 %}, {{ batch.deliv_addr_4 }}{% endif %} </td>
+   </tr>
+   <tr>
       <td> Truck: </td>
       <td> {{ batch.truck }} </td>
    </tr>
@@ -24,18 +31,90 @@
       <td> {{ batch.driver }} </td>
    </tr>
    <tr>
-      <td> Recipe: </td>
-      <td> {{ batch.recipe }} </td>
+      <th> Recipe </th>
+      <th>  </th>
    </tr>
    <tr>
-      <td> Delivery Address: </td>
-      <td> {{ batch.deliv_addr_1 }}
-           {% if batch.deliv_addr_2 %}, {{ batch.deliv_addr_2 }}{% endif %}
-           {% if batch.deliv_addr_3 %}, {{ batch.deliv_addr_3 }}{% endif %}
-           {% if batch.deliv_addr_4 %}, {{ batch.deliv_addr_4 }}{% endif %} </td>
+      <td> Name: </td>
+      <td> {{ batch.recipe.name }} ({{ batch.recipe.recipe_no }}.{{ batch.recipe.version }}) </td>
    </tr>
+   <tr>
+      <td> Description: </td>
+      <td> {{ batch.recipe.description }} </td>
+   </tr>
+   <tr>
+      <td> Admixtures: </td>
+      <td> {{ batch.recipe.admixtures_as_list|join:', ' }} </td>
+   </tr>
+   <tr>
+      <td> Slump: </td>
+      <td> {{ batch.recipe.get_slump_class_display }} </td>
+   </tr>
+   <tr>
+      <td> Max Agg Size (D): </td>
+      <td> {{ batch.recipe.aggregate_D }} mm </td>
+   </tr>	
+   <tr>
+      <td> Min. Cement Content: </td>
+      <td> {{ batch.recipe.total_cement }} kg/m^3 </td>
+   </tr>
+   <tr>
+      <td> Cement Type: </td>
+      <td> {{ batch.recipe.cement_types_as_list|join:', ' }} </td>
+   </tr>
+   <tr>
+      <td> Max W/C Ratio: </td>
+      <td> {{ batch.recipe.wc_ratio|floatformat:2 }} </td>
+   </tr>
+   <tr>
+      <td> Exposure Class: </td>
+      <td> {{ batch.recipe.exp_classes_as_list|join:', ' }} </td>
+   </tr>	
+   <tr>
+      <td> Chloride Content Class: </td>
+      <td> {{ batch.recipe.get_cl_content_class_display }} kg/m^3 </td>
+   </tr>
+
 </table>
 </p>
+
+	<p>
+	<table>
+		<tr>
+        	<th> Totals </th>
+		<th> Volume: {{ batch.volume }} m<sup>3</sup> </th>
+		<th> Start Time: {{ batch.drop_set.all.first.start_datetime.time }} </th>
+		<th> End Time: {{ batch.drop_set.all.last.end_datetime.time }} </th>
+		</tr>
+	</table>
+	<table>
+		<tr>
+        	<td> Ingredient </td>
+		<td> Design </td>
+		<td> Target </td>
+		<td> Actual </td>
+		<td> Moisture (%)</td>
+		</tr>
+    
+		{% for detail in batch.batch_totals %}
+		<tr>
+        	<td> {{ detail.ingredient }} </td>
+		<td> {{ detail.design }} {{detail.ingredient.unit}} </td>
+		<td> {{ detail.target }} {{detail.ingredient.unit}}</td>
+		<td> {{ detail.actual }} {{detail.ingredient.unit}}</td>
+		<td> {{ detail.moisture|floatformat }} </td>
+		</tr>
+		{% endfor %}
+	</table>
+	<table>
+		<tr>
+        	<th> Water/Cement Ratio: {{ batch.wc_ratio|floatformat:2 }} </th>
+		<th> </th>
+		<th> Water in Aggs: {{ batch.water_in_aggs|floatformat:2 }} </th>
+		<th> </th>
+		</tr>
+	</table>
+	</p>
 
 {% for drop in batch.drop_set.all %}
 	<p>
@@ -49,22 +128,30 @@
 	</table>
 	<table>
 		<tr>
-        	<th> Ingredient </th>
-		<th> Design </th>
-		<th> Target </th>
-		<th> Actual </th>
-		<th> Moisture </th>
+        	<td> Ingredient </td>
+		<td> Design </td>
+		<td> Target </td>
+		<td> Actual </td>
+		<td> Moisture (%)</td>
 		</tr>
     
 		{% for detail in drop.drop_detail_set.all %}
 		<tr>
         	<td> {{ detail.ingredient }} </td>
-		<td> {{ detail.design }} </td>
-		<td> {{ detail.target }} </td>
-		<td> {{ detail.actual }} </td>
-		<td> {{ detail.moisture }} </td>
+		<td> {{ detail.design }} {{detail.ingredient.unit}} </td>
+		<td> {{ detail.target }} {{detail.ingredient.unit}}</td>
+		<td> {{ detail.actual }} {{detail.ingredient.unit}}</td>
+		<td> {{ detail.moisture|floatformat }} </td>
 		</tr>
 		{% endfor %}
+	</table>
+	<table>
+		<tr>
+        	<th> Water/Cement Ratio: {{ drop.wc_ratio|floatformat:2 }} </th>
+		<th> </th>
+		<th> Water in Aggs: {{ drop.water_in_aggs|floatformat:2 }} </th>
+		<th> </th>
+		</tr>
 	</table>
 	</p>
 	

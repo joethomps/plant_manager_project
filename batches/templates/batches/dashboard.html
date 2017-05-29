@@ -23,7 +23,7 @@
         <td> {{ batch }} </td>
 	<td> {{ batch.client }} </td>
 	<td> {{ batch.order_ref }} </td>
-	<td> {{ batch.recipe }} </td>
+	<td> {{ batch.recipe.name }} </td>
 	<td> {{ batch.volume }} </td>
 	<td> {{ batch.get_status_display }} </td>
 	<td> {% if batch.status == 'PEND' %} <a class="button button1" href="{% url 'edit_batch' batch.batch_no %}"> Edit </a> {% endif %} </td>

@@ -12,6 +12,7 @@ urlpatterns = [
     url(r'^(?P<batch_no>[0-9]+)/ticket/$', views.ticket, name='ticket'),
 
     url(r'^recipes/$', views.recipes, name='recipes'),
+    url(r'^recipes/all/$', views.all_recipes, name='all_recipes'),
     url(r'^recipes/new/$', views.new_recipe, name='new_recipe'),
     url(r'^recipes/(?P<recipe_id>[0-9]+)/edit/$', views.edit_recipe, name='edit_recipe'),
     url(r'^recipes/(?P<recipe_id>[0-9]+)/delete/$', views.delete_recipe, name='delete_recipe'),

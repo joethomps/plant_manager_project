@@ -1,11 +1,16 @@
 table {
-   width: 100%;
-   text-align: left;
+    border-collapse: collapse;
+    width: 100%;
+}
+th, td {
+    padding: 2px;
+    text-align: left;
 }
 th {
-    border-bottom: 1px solid #ddd;
+    background-color: #6495ED;
+	border-bottom: 1px solid #ddd;
+    color: white;
 }
-
-table.forms_table {
-
+th a {
+    color: white;
 }

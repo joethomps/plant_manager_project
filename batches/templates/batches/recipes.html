@@ -8,15 +8,16 @@
 
 <table>
 	<tr>
-	<th> ID </th>
+	<th> No. </th>
 	<th> Name </th>
 	<th> Description </th>
+	<th> Strength </th>
 	<th> Slump </th>
 	<th> Exp </th>
 	<th> Cl Cont. </th>
 	<th> Mix Time </th>
 	{% for i in ing_list %}
-        <th> {{ i }} </th>
+        <th> {{ i.name }} </th>
 	{% endfor %}
 	<th> </th>
 	<th> </th>
@@ -24,11 +25,12 @@
 
 {% for r in recipe_data %}
 	<tr>
-	<td> {{ r.recipe.id }} </td>
+	<td> {{ r.recipe.recipe_no }}.{{ r.recipe.version }} </td>
 	<td> {{ r.recipe.name }} </td>
 	<td> {{ r.recipe.description }} </td>
+	<td> {{ r.recipe.get_strength_class_display }} </td>
 	<td> {{ r.recipe.slump_class }} </td>
-	<td> {{ r.recipe.exposure_class }} </td>
+	<td> {{ r.recipe.exp_classes_as_list|join:', ' }} </td>
 	<td> {{ r.recipe.cl_content_class }} </td>
 	<td> {{ r.recipe.mix_time }} </td>
 	{% for i in r.details %}
