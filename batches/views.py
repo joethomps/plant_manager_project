@@ -46,7 +46,7 @@ def generics(request, model):
         create_new = False
         obj_name = 'Location'
         field_names = ['ID','Name','Description','Ingredient','Usage Ratio']
-        data = [[obj.plc_ref, obj.name, obj.description, obj.current_ingredient, obj.usage_ratio] for obj in Location.objects.all()]
+        data = [[obj.pk, obj.name, obj.description, obj.current_ingredient, obj.usage_ratio] for obj in Location.objects.all()]
     context = {'create_new':create_new, 'model':model, 'obj_name':obj_name, 'field_names':field_names, 'data':data}
     return render(request, 'batches/generic.html', context)
 
@@ -207,13 +207,22 @@ def delete_recipe(request, recipe_id):
     else:
         message = []
                    
-    context = {'message':message, 'recipe_id':recipe_id}
+    context = {'message':message, 'recipe':r}
     return render(request, 'batches/delete_recipe.html', context)
 
 def copy_recipe(request, recipe_id):
+    def next_recipe_no():
+        from django.db.models import Max
+        max = Recipe.objects.all().aggregate(Max('recipe_no'))['recipe_no__max']
+        if max == None:
+            return 1
+        else:
+            return max+1
     r = get_object_or_404(Recipe, id=recipe_id)
     rds = r.recipe_detail_set.all()
     r.pk = None
+    r.recipe_no = next_recipe_no()
+    r.version = 1
     r.name = r.name + '-Copy'
     r.save()
     for rd in rds:
