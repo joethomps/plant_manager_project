@@ -89,11 +89,19 @@
 	</table>
 	<table>
 		<tr>
+<<<<<<< HEAD
         	<td> Ingredient </td>
 		<td> Design </td>
 		<td> Target </td>
 		<td> Actual </td>
 		<td> Moisture (%)</td>
+=======
+        	<th> Ingredient </th>
+		<th> Design </th>
+		<th> Target </th>
+		<th> Actual </th>
+		<th> Moisture (%)</th>
+>>>>>>> 887ea5172d68a9529e4afdfa23f5d4be791c1926
 		</tr>
     
 		{% for detail in batch.batch_totals %}
@@ -102,6 +110,7 @@
 		<td> {{ detail.design }} {{detail.ingredient.unit}} </td>
 		<td> {{ detail.target }} {{detail.ingredient.unit}}</td>
 		<td> {{ detail.actual }} {{detail.ingredient.unit}}</td>
+<<<<<<< HEAD
 		<td> {{ detail.moisture|floatformat }} </td>
 		</tr>
 		{% endfor %}
@@ -114,6 +123,12 @@
 		<th> </th>
 		</tr>
 	</table>
+=======
+		<td> {{ detail.moisture }} </td>
+		</tr>
+		{% endfor %}
+	</table>
+>>>>>>> 887ea5172d68a9529e4afdfa23f5d4be791c1926
 	</p>
 
 {% for drop in batch.drop_set.all %}
@@ -128,11 +143,19 @@
 	</table>
 	<table>
 		<tr>
+<<<<<<< HEAD
         	<td> Ingredient </td>
 		<td> Design </td>
 		<td> Target </td>
 		<td> Actual </td>
 		<td> Moisture (%)</td>
+=======
+        	<th> Ingredient </th>
+		<th> Design </th>
+		<th> Target </th>
+		<th> Actual </th>
+		<th> Moisture (%) </th>
+>>>>>>> 887ea5172d68a9529e4afdfa23f5d4be791c1926
 		</tr>
     
 		{% for detail in drop.drop_detail_set.all %}
@@ -141,7 +164,11 @@
 		<td> {{ detail.design }} {{detail.ingredient.unit}} </td>
 		<td> {{ detail.target }} {{detail.ingredient.unit}}</td>
 		<td> {{ detail.actual }} {{detail.ingredient.unit}}</td>
+<<<<<<< HEAD
 		<td> {{ detail.moisture|floatformat }} </td>
+=======
+		<td> {{ detail.moisture }} </td>
+>>>>>>> 887ea5172d68a9529e4afdfa23f5d4be791c1926
 		</tr>
 		{% endfor %}
 	</table>

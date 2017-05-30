@@ -46,7 +46,7 @@ def generics(request, model):
         create_new = False
         obj_name = 'Location'
         field_names = ['ID','Name','Description','Ingredient','Usage Ratio']
-        data = [[obj.pk, obj.name, obj.description, obj.current_ingredient, obj.usage_ratio] for obj in Location.objects.all()]
+        data = [[obj.plc_ref, obj.name, obj.description, obj.current_ingredient, obj.usage_ratio] for obj in Location.objects.all()]
     context = {'create_new':create_new, 'model':model, 'obj_name':obj_name, 'field_names':field_names, 'data':data}
     return render(request, 'batches/generic.html', context)
 
@@ -169,7 +169,7 @@ def edit_recipe(request, recipe_id):
             for i in ing:
                 RecDetSearch = Recipe_Detail.objects.filter(recipe=r_edit, ingredient=i)
                 RecDet = RecDetSearch.get() if RecDetSearch.exists() else Recipe_Detail(recipe=r_edit, ingredient=i) 
-                RecDetForms[i] = RecipeDetailForm(request.POST, instance=RecDet, prefix=str(i))
+                RecDetForms[str(i)] = RecipeDetailForm(request.POST, instance=RecDet, prefix=str(i))
             if all(RecDetForm.is_valid() for RecDetForm in RecDetForms.values()):
                 for RecDetForm in RecDetForms.values():
                     RecDet = RecDetForm.save(commit=False)

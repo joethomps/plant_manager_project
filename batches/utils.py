@@ -9,7 +9,7 @@ from batches.models import Drop, Recipe_Detail, Ingredient
 from django.db.models import Max, Sum, Avg, F
 
 def createDocket(b):
-    r = b.recipe 
+    r = b.recipe
 
     # initialise canvas object for ticket
     filename = 'b' + str(b.batch_no).zfill(8) + '.pdf'
@@ -32,6 +32,7 @@ def createDocket(b):
     ct.write('DELIVERY TICKET', align='r')
 
     # Name and Address
+
     ch = cursor(p,0,h-20,size=20)
     ch.write('FOGARTY CONCRETE')
     ch.size = 12; ch.newline();
@@ -282,14 +283,16 @@ class cursor:
         if text_string == '-...':
             w = self.width
             x = start_x(self.x,w,align)
-            self.c.setDash(1,2)
+            self.c.setDash(1,2)
+
             self.c.line(x,              self.y-s/4.0,
                         self.x_home+w,  self.y-s/4.0)
             self.c.setDash(1)
         elif text_string == '...':
             w = self.width
             x = start_x(self.x,w,align)
-            self.c.setDash(1,2)
+            self.c.setDash(1,2)
+
             self.c.line(x,              self.y-s/4.0,
                         x+w,  self.y-s/4.0)
             self.c.setDash(1) 
